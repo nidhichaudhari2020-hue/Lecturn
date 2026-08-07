@@ -1,5 +1,6 @@
 import chromadb
 from groq import Groq
+
 from config import (
     GROQ_API_KEY,
     CHROMA_DB_PATH,
@@ -7,29 +8,55 @@ from config import (
     LLM_MODEL,
 )
 
-client = Groq(api_key=GROQ_API_KEY)
-
 
 def generate_important_topics():
 
-    chroma_client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
+    # Create Groq client only when this feature is used
+    client = Groq(api_key=GROQ_API_KEY)
 
-    collection = chroma_client.get_collection(COLLECTION_NAME)
+    # Connect to ChromaDB
+    chroma_client = chromadb.PersistentClient(
+        path=CHROMA_DB_PATH
+    )
 
+    collection = chroma_client.get_collection(
+        COLLECTION_NAME
+    )
+
+    # Get indexed notes
     docs = collection.get()["documents"]
 
+    # Limit context size
     context = "\n\n".join(docs[:30])
 
     prompt = f"""
-Using ONLY these study notes, list the 10 most important exam topics.
+You are an expert teacher helping a student prepare for exams.
 
-Return the result in Markdown like:
+Using ONLY the study notes below, identify the 10 most
+important topics that the student should revise.
+
+For each topic:
+- Give the topic name
+- Give a short reason why it is important
+- Keep the explanation concise
+
+Return the result in Markdown using this format:
 
 # Important Topics
 
-1.
-2.
-3.
+1. **Topic Name**
+   - Why it is important
+
+2. **Topic Name**
+   - Why it is important
+
+Continue until exactly 10 topics are listed.
+
+Rules:
+- Use only the supplied study notes
+- Do not invent unrelated topics
+- Focus on definitions, concepts, algorithms, formulas,
+  comparisons, and frequently examinable ideas
 
 Study Notes:
 
@@ -43,7 +70,8 @@ Study Notes:
                 "role": "user",
                 "content": prompt
             }
-        ]
+        ],
+        temperature=0.3
     )
 
     return response.choices[0].message.content

@@ -9,48 +9,64 @@ from config import (
     LLM_MODEL,
 )
 
-client = Groq(api_key=GROQ_API_KEY)
-
 
 def generate_flashcards():
 
-    chroma_client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
+    # Groq client loads only when flashcards are generated
+    client = Groq(api_key=GROQ_API_KEY)
 
-    collection = chroma_client.get_collection(COLLECTION_NAME)
+    # Connect to ChromaDB
+    chroma_client = chromadb.PersistentClient(
+        path=CHROMA_DB_PATH
+    )
 
+    collection = chroma_client.get_collection(
+        COLLECTION_NAME
+    )
+
+    # Get indexed notes
     docs = collection.get()["documents"]
 
+    # Use first 30 chunks
     context = "\n\n".join(docs[:30])
 
+    # Prompt
     prompt = f"""
 You are an expert teacher.
 
-Generate exactly 15 flashcards.
+Generate exactly 15 flashcards from the study notes below.
 
 Return ONLY valid JSON.
 
 Format:
 
 [
- {{
-   "question":"...",
-   "answer":"..."
- }}
+  {{
+    "question": "...",
+    "answer": "..."
+  }}
 ]
 
-No markdown.
+Rules:
+- Generate exactly 15 flashcards
+- Focus on important concepts
+- Keep answers clear and concise
+- Use only the supplied study notes
+- Do not include markdown
+- Do not include text outside JSON
 
 Study Notes:
 
 {context}
 """
 
+    # Generate flashcards
     response = client.chat.completions.create(
         model=LLM_MODEL,
         messages=[
             {
-                "role":"user",
-                "content":prompt
+                "role": "user",
+                "content": prompt
             }
         ],
         temperature=0.3
@@ -58,9 +74,17 @@ Study Notes:
 
     text = response.choices[0].message.content
 
-    text = text.replace("```json","").replace("```","").strip()
+    # Remove markdown if the AI accidentally adds it
+    text = (
+        text
+        .replace("```json", "")
+        .replace("```", "")
+        .strip()
+    )
 
+    # Convert JSON text into Python list
     try:
         return json.loads(text)
-    except:
+
+    except json.JSONDecodeError:
         return []

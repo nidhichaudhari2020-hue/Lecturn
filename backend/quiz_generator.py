@@ -9,17 +9,19 @@ from config import (
     LLM_MODEL,
 )
 
+
 def generate_quiz():
 
+    # Create Groq client only when quiz generation is requested
     client = Groq(api_key=GROQ_API_KEY)
 
+    chroma_client = chromadb.PersistentClient(
+        path=CHROMA_DB_PATH
+    )
 
-
-def generate_quiz():
-
-    chroma_client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
-
-    collection = chroma_client.get_collection(COLLECTION_NAME)
+    collection = chroma_client.get_collection(
+        COLLECTION_NAME
+    )
 
     docs = collection.get()["documents"]
 
@@ -35,27 +37,27 @@ Return ONLY valid JSON.
 Format:
 
 [
- {{
-   "question":"...",
-   "options":[
+  {{
+    "question": "...",
+    "options": [
       "...",
       "...",
       "...",
       "..."
-   ],
-   "answer":0,
-   "topic":"..."
- }}
+    ],
+    "answer": 0,
+    "topic": "..."
+  }}
 ]
 
 Rules:
-
 - Exactly 10 questions
-- Exactly 4 options
-- answer is option index (0-3)
-- No explanations
-- No markdown
-- No text outside JSON
+- Exactly 4 options per question
+- "answer" must be an integer from 0 to 3
+- Use only the supplied study notes
+- Do not include explanations
+- Do not include markdown
+- Do not include text outside the JSON
 
 Study Notes:
 
@@ -75,8 +77,16 @@ Study Notes:
 
     text = response.choices[0].message.content
 
+    # Remove accidental markdown fences if the model adds them
+    text = (
+        text
+        .replace("```json", "")
+        .replace("```", "")
+        .strip()
+    )
+
     try:
         return json.loads(text)
 
-    except Exception:
+    except json.JSONDecodeError:
         return []
