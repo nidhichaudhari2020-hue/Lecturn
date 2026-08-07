@@ -6,19 +6,10 @@ from config import EMBEDDING_MODEL
 
 @st.cache_resource(show_spinner=False)
 def load_embedding_model():
-    """
-    Load and cache the embedding model.
-
-    The model is loaded once per running app instance
-    instead of being recreated during every Streamlit rerun.
-    """
     return SentenceTransformer(EMBEDDING_MODEL)
 
 
 def generate_embeddings(texts):
-    """
-    Convert a list of text strings into embedding vectors.
-    """
     if not texts:
         return []
 
