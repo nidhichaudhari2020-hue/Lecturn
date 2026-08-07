@@ -9,7 +9,10 @@ from config import (
     LLM_MODEL,
 )
 
-client = Groq(api_key=GROQ_API_KEY)
+def generate_quiz():
+
+    client = Groq(api_key=GROQ_API_KEY)
+
 
 
 def generate_quiz():
