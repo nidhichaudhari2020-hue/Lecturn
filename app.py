@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import streamlit.components.v1 as components
 
 from backend.important_topics import generate_important_topics
 from backend.summarizer import generate_summary
@@ -36,9 +37,8 @@ def load_css():
                 f"<style>{file.read()}</style>",
                 unsafe_allow_html=True
             )
-
     except FileNotFoundError:
-        st.warning("Custom style file was not found.")
+        pass
 
 
 load_css()
@@ -49,16 +49,18 @@ load_css()
 # =========================================================
 
 defaults = {
-
-    # Main app
     "indexed": False,
     "messages": [],
 
-    # Prevent repeated auto-indexing
+    # Prevent repeated auto indexing
     "last_uploaded_files": [],
+
+    # Navigation
+    "scroll_target": None,
 
     # Quiz
     "quiz": [],
+    "quiz_version": 0,
     "current_question": 0,
     "score": 0,
     "show_result": False,
@@ -74,14 +76,13 @@ defaults = {
     "total_pages": 0,
     "total_chunks": 0,
 
-    # Generated study content
+    # Generated content
     "summary": "",
     "important_topics": ""
 }
 
 
 for key, value in defaults.items():
-
     if key not in st.session_state:
         st.session_state[key] = value
 
@@ -90,18 +91,21 @@ for key, value in defaults.items():
 # HERO SECTION
 # =========================================================
 
+hero_html = (
+    '<div class="hero-card">'
+    '<div class="hero-title">📚 Lecturn</div>'
+    '<div class="hero-text">'
+    'Turn your study notes into answers, quizzes, flashcards, '
+    'summaries and smarter revision sessions.'
+    '</div>'
+    '</div>'
+)
+
 st.markdown(
-    """
-<div class="hero-card">
-    <div class="hero-title">📚 Lecturn</div>
-    <div class="hero-text">
-        Turn your study notes into answers, quizzes, flashcards,
-        summaries and smarter revision sessions.
-    </div>
-</div>
-""",
+    hero_html,
     unsafe_allow_html=True
 )
+
 
 # =========================================================
 # FEATURE CARDS
@@ -132,24 +136,27 @@ features = [
     )
 ]
 
-for column, feature in zip(feature_columns, features):
 
+for column, feature in zip(
+    feature_columns,
+    features
+):
     icon, title, description = feature
 
+    card_html = (
+        '<div class="feature-card">'
+        f'<div class="feature-icon">{icon}</div>'
+        f'<div class="feature-title">{title}</div>'
+        f'<div class="feature-text">{description}</div>'
+        '</div>'
+    )
+
     with column:
-
-        card_html = (
-            '<div class="feature-card">'
-            f'<div class="feature-icon">{icon}</div>'
-            f'<div class="feature-title">{title}</div>'
-            f'<div class="feature-text">{description}</div>'
-            '</div>'
-        )
-
         st.markdown(
             card_html,
             unsafe_allow_html=True
         )
+
 
 st.write("")
 
@@ -160,26 +167,19 @@ st.write("")
 
 st.sidebar.title("📂 Study Workspace")
 
-
 uploaded_files = st.sidebar.file_uploader(
-
     "Upload your PDF notes",
-
     type=["pdf"],
-
     accept_multiple_files=True,
-
     help=(
-        "You can upload one or multiple PDF files. "
-        "Lecturn will index them automatically."
+        "Upload one or more PDF files. "
+        "They will be indexed automatically."
     )
 )
-
 
 st.sidebar.caption(
     "✨ Your notes will be indexed automatically after upload."
 )
-
 
 st.sidebar.divider()
 
@@ -190,20 +190,12 @@ st.sidebar.divider()
 
 if uploaded_files:
 
-    # Create a signature for the currently uploaded files.
-    # This prevents Streamlit from indexing the same PDFs
-    # again whenever the app reruns.
-
     current_files = [
-
         f"{uploaded_file.name}-{uploaded_file.size}"
-
         for uploaded_file in uploaded_files
     ]
 
-
-    # Only index if the uploaded files changed
-
+    # Only index when uploaded files change
     if (
         st.session_state.last_uploaded_files
         != current_files
@@ -212,11 +204,8 @@ if uploaded_files:
         try:
 
             with st.spinner(
-                "🧠 Lecturn is reading, understanding "
-                "and indexing your notes..."
+                "🧠 Reading and preparing your notes..."
             ):
-
-                # Ensure folders exist
 
                 os.makedirs(
                     "uploads",
@@ -228,29 +217,18 @@ if uploaded_files:
                     exist_ok=True
                 )
 
-
-                # Remove previous ChromaDB collection
-
+                # Start fresh for the new PDFs
                 reset_database()
-
-
-                # Progress bar
 
                 progress = st.sidebar.progress(0)
 
-
                 all_chunks = []
-
                 total_pages = 0
+                total_files = len(uploaded_files)
 
-                total_files = len(
-                    uploaded_files
-                )
-
-
-                # =========================================
-                # PROCESS EACH PDF
-                # =========================================
+                # -----------------------------------------
+                # READ EACH PDF
+                # -----------------------------------------
 
                 for index, uploaded_file in enumerate(
                     uploaded_files
@@ -261,9 +239,6 @@ if uploaded_files:
                         uploaded_file.name
                     )
 
-
-                    # Save uploaded PDF
-
                     with open(
                         save_path,
                         "wb"
@@ -273,52 +248,30 @@ if uploaded_files:
                             uploaded_file.getbuffer()
                         )
 
-
-                    # Extract PDF text
-
                     pages = extract_text(
                         save_path
                     )
 
-
-                    total_pages += len(
-                        pages
-                    )
-
-
-                    # Split text into chunks
+                    total_pages += len(pages)
 
                     chunks = split_into_chunks(
                         pages
                     )
 
-
                     all_chunks.extend(
                         chunks
                     )
 
-
-                    # First half of progress = PDF processing
-
                     progress.progress(
-
                         int(
-
-                            (
-                                (index + 1)
-                                / total_files
-                            )
-
+                            ((index + 1) / total_files)
                             * 50
-
                         )
-
                     )
 
-
-                # =========================================
-                # CHECK IF TEXT WAS FOUND
-                # =========================================
+                # -----------------------------------------
+                # CHECK FOR READABLE TEXT
+                # -----------------------------------------
 
                 if not all_chunks:
 
@@ -329,105 +282,69 @@ if uploaded_files:
 
                 else:
 
-                    # =====================================
-                    # GENERATE EMBEDDINGS
-                    # =====================================
-
                     progress.progress(60)
 
-
                     texts = [
-
                         chunk["text"]
-
                         for chunk in all_chunks
-
                     ]
 
-
-                    embeddings = (
-                        generate_embeddings(
-                            texts
-                        )
+                    # Generate embeddings
+                    embeddings = generate_embeddings(
+                        texts
                     )
-
 
                     progress.progress(85)
 
-
-                    # =====================================
-                    # STORE IN CHROMADB
-                    # =====================================
-
+                    # Store in ChromaDB
                     store_chunks(
                         all_chunks,
                         embeddings
                     )
 
-
                     progress.progress(100)
 
-
-                    # =====================================
-                    # UPDATE SESSION STATE
-                    # =====================================
+                    # -------------------------------------
+                    # UPDATE APP STATE
+                    # -------------------------------------
 
                     st.session_state.indexed = True
 
-
-                    st.session_state.total_pdfs = (
-                        len(uploaded_files)
+                    st.session_state.total_pdfs = len(
+                        uploaded_files
                     )
-
 
                     st.session_state.total_pages = (
                         total_pages
                     )
 
-
-                    st.session_state.total_chunks = (
-                        len(all_chunks)
+                    st.session_state.total_chunks = len(
+                        all_chunks
                     )
-
-
-                    # Remember which files were indexed
 
                     st.session_state.last_uploaded_files = (
                         current_files
                     )
 
-
-                    # =====================================
-                    # RESET OLD GENERATED CONTENT
-                    # =====================================
-
+                    # Reset previous learning content
                     st.session_state.quiz = []
-
                     st.session_state.current_question = 0
-
                     st.session_state.score = 0
-
                     st.session_state.show_result = False
-
+                    st.session_state.selected_option = None
 
                     st.session_state.flashcards = []
-
                     st.session_state.current_flashcard = 0
-
                     st.session_state.show_answer = False
 
-
                     st.session_state.summary = ""
-
                     st.session_state.important_topics = ""
 
                     st.session_state.messages = []
 
-
                     st.sidebar.success(
                         "✅ Notes indexed automatically!"
                     )
-
 
         except Exception as error:
 
@@ -436,11 +353,6 @@ if uploaded_files:
             st.sidebar.error(
                 f"Automatic indexing failed: {error}"
             )
-
-
-# =========================================================
-# NO FILES UPLOADED
-# =========================================================
 
 else:
 
@@ -470,7 +382,7 @@ if st.sidebar.button(
     if not st.session_state.indexed:
 
         st.sidebar.warning(
-            "Please upload notes first."
+            "Please upload your notes first."
         )
 
     else:
@@ -478,28 +390,35 @@ if st.sidebar.button(
         try:
 
             with st.spinner(
-                "📝 Creating a fresh quiz "
-                "from your notes..."
+                "📝 Creating a fresh quiz..."
             ):
 
                 quiz = generate_quiz()
-
 
             if quiz:
 
                 st.session_state.quiz = quiz
 
+                # Reset quiz completely
                 st.session_state.current_question = 0
-
                 st.session_state.score = 0
-
                 st.session_state.show_result = False
+                st.session_state.selected_option = None
 
+                # New quiz version ensures old radio
+                # selections are forgotten
+                st.session_state.quiz_version += 1
+
+                # Move directly to quiz
+                st.session_state.scroll_target = (
+                    "quiz-section"
+                )
 
                 st.sidebar.success(
                     "Quiz generated!"
                 )
 
+                st.rerun()
 
             else:
 
@@ -507,7 +426,6 @@ if st.sidebar.button(
                     "The quiz could not be generated. "
                     "Please try again."
                 )
-
 
         except Exception as error:
 
@@ -528,7 +446,7 @@ if st.sidebar.button(
     if not st.session_state.indexed:
 
         st.sidebar.warning(
-            "Please upload notes first."
+            "Please upload your notes first."
         )
 
     else:
@@ -536,14 +454,10 @@ if st.sidebar.button(
         try:
 
             with st.spinner(
-                "🃏 Turning key concepts "
-                "into flashcards..."
+                "🃏 Creating flashcards..."
             ):
 
-                flashcards = (
-                    generate_flashcards()
-                )
-
+                flashcards = generate_flashcards()
 
             if flashcards:
 
@@ -552,14 +466,18 @@ if st.sidebar.button(
                 )
 
                 st.session_state.current_flashcard = 0
-
                 st.session_state.show_answer = False
 
+                # Move directly to flashcards
+                st.session_state.scroll_target = (
+                    "flashcards-section"
+                )
 
                 st.sidebar.success(
                     "Flashcards generated!"
                 )
 
+                st.rerun()
 
             else:
 
@@ -567,7 +485,6 @@ if st.sidebar.button(
                     "The flashcards could not be "
                     "generated. Please try again."
                 )
-
 
         except Exception as error:
 
@@ -588,7 +505,7 @@ if st.sidebar.button(
     if not st.session_state.indexed:
 
         st.sidebar.warning(
-            "Please upload notes first."
+            "Please upload your notes first."
         )
 
     else:
@@ -596,19 +513,23 @@ if st.sidebar.button(
         try:
 
             with st.spinner(
-                "✨ Creating your revision-friendly "
-                "summary..."
+                "✨ Creating your study summary..."
             ):
 
                 st.session_state.summary = (
                     generate_summary()
                 )
 
+            # Move directly to summary
+            st.session_state.scroll_target = (
+                "summary-section"
+            )
 
             st.sidebar.success(
                 "Summary generated!"
             )
 
+            st.rerun()
 
         except Exception as error:
 
@@ -629,7 +550,7 @@ if st.sidebar.button(
     if not st.session_state.indexed:
 
         st.sidebar.warning(
-            "Please upload notes first."
+            "Please upload your notes first."
         )
 
     else:
@@ -637,27 +558,29 @@ if st.sidebar.button(
         try:
 
             with st.spinner(
-                "🔍 Finding the most important "
-                "exam topics..."
+                "🔍 Finding important exam topics..."
             ):
 
                 st.session_state.important_topics = (
                     generate_important_topics()
                 )
 
+            # Move directly to topics
+            st.session_state.scroll_target = (
+                "topics-section"
+            )
 
             st.sidebar.success(
                 "Important topics generated!"
             )
 
+            st.rerun()
 
         except Exception as error:
 
             st.sidebar.error(
-
-                "Important topics generation "
-                f"failed: {error}"
-
+                "Important topics generation failed: "
+                f"{error}"
             )
 
 
@@ -672,12 +595,22 @@ show_dashboard()
 # QUIZ
 # =========================================================
 
+st.markdown(
+    '<div id="quiz-section"></div>',
+    unsafe_allow_html=True
+)
+
 show_quiz()
 
 
 # =========================================================
-# FLASHCARDS DISPLAY
+# FLASHCARDS
 # =========================================================
+
+st.markdown(
+    '<div id="flashcards-section"></div>',
+    unsafe_allow_html=True
+)
 
 if st.session_state.flashcards:
 
@@ -685,74 +618,50 @@ if st.session_state.flashcards:
         "🃏 Flashcards"
     )
 
-
     card_index = (
         st.session_state.current_flashcard
     )
-
 
     cards = (
         st.session_state.flashcards
     )
 
-
     card = cards[
         card_index
     ]
 
-
-    # Flashcard progress
-
     st.progress(
-
         (card_index + 1)
         / len(cards)
-
     )
-
 
     st.caption(
-
         f"Card {card_index + 1} "
         f"of {len(cards)}"
-
     )
 
-
-    # Flashcard question
+    flashcard_html = (
+        '<div class="feature-card">'
+        '<div class="feature-icon">🧠</div>'
+        f'<div class="feature-title">{card["question"]}</div>'
+        '</div>'
+    )
 
     st.markdown(
-
-        f"""
-        <div class="feature-card">
-
-            <div class="feature-icon">
-                🧠
-            </div>
-
-            <div class="feature-title">
-                {card["question"]}
-            </div>
-
-        </div>
-        """,
-
+        flashcard_html,
         unsafe_allow_html=True
     )
 
-
     st.write("")
 
-
     # Reveal answer
-
     if st.button(
         "👁 Reveal Answer",
-        key="show_flashcard_answer"
+        key="show_flashcard_answer",
+        use_container_width=True
     ):
 
         st.session_state.show_answer = True
-
 
     if st.session_state.show_answer:
 
@@ -760,74 +669,81 @@ if st.session_state.flashcards:
             card["answer"]
         )
 
-
-    # Navigation
-
     previous_column, next_column = (
         st.columns(2)
     )
 
+    # -----------------------------------------
+    # PREVIOUS FLASHCARD
+    # -----------------------------------------
 
     with previous_column:
 
         if st.button(
-
             "⬅ Previous",
-
-            disabled=(
-                card_index == 0
-            ),
-
+            disabled=(card_index == 0),
             key="previous_flashcard",
-
             use_container_width=True
-
         ):
 
             st.session_state.current_flashcard -= 1
 
             st.session_state.show_answer = False
 
+            # Keep user at flashcards
+            st.session_state.scroll_target = (
+                "flashcards-section"
+            )
+
             st.rerun()
 
+    # -----------------------------------------
+    # NEXT FLASHCARD
+    # -----------------------------------------
 
     with next_column:
 
         if st.button(
-
             "Next ➡",
-
             disabled=(
-
                 card_index
                 == len(cards) - 1
-
             ),
-
             key="next_flashcard",
-
             use_container_width=True
-
         ):
 
             st.session_state.current_flashcard += 1
 
             st.session_state.show_answer = False
 
-            st.rerun()
+            # Keep user at flashcards
+            st.session_state.scroll_target = (
+                "flashcards-section"
+            )
 
+            st.rerun()
 
     st.divider()
 
 
 # =========================================================
-# DISPLAY SUMMARY
+# SUMMARY
 # =========================================================
+
+st.markdown(
+    '<div id="summary-section"></div>',
+    unsafe_allow_html=True
+)
 
 if st.session_state.summary:
 
+    st.header(
+        "📚 Study Summary"
+    )
+
     with st.expander(
-        "📚 Open Study Summary",
+        "Open Study Summary",
         expanded=True
     ):
 
@@ -835,15 +751,26 @@ if st.session_state.summary:
             st.session_state.summary
         )
 
+    st.divider()
+
 
 # =========================================================
-# DISPLAY IMPORTANT TOPICS
+# IMPORTANT TOPICS
 # =========================================================
+
+st.markdown(
+    '<div id="topics-section"></div>',
+    unsafe_allow_html=True
+)
 
 if st.session_state.important_topics:
 
+    st.header(
+        "⭐ Important Topics"
+    )
+
     with st.expander(
-        "⭐ Open Important Topics",
+        "Open Important Topics",
         expanded=True
     ):
 
@@ -851,41 +778,39 @@ if st.session_state.important_topics:
             st.session_state.important_topics
         )
 
+    st.divider()
+
 
 # =========================================================
 # AI CHAT
 # =========================================================
 
-st.divider()
-
+st.markdown(
+    '<div id="chat-section"></div>',
+    unsafe_allow_html=True
+)
 
 st.header(
     "💬 AI Study Assistant"
 )
 
-
 if not st.session_state.indexed:
 
     st.info(
-
         "📄 Upload your PDF notes. "
-        "Lecturn will automatically index them "
-        "and prepare your study workspace."
-
+        "They will be indexed automatically."
     )
 
 else:
 
     st.success(
-
         "✅ Your notes are ready. "
         "Ask anything from the uploaded material."
-
     )
 
 
 # =========================================================
-# DISPLAY CHAT HISTORY
+# CHAT HISTORY
 # =========================================================
 
 for message in st.session_state.messages:
@@ -904,35 +829,25 @@ for message in st.session_state.messages:
 # =========================================================
 
 prompt = st.chat_input(
-
     "Ask anything from your notes...",
-
     disabled=(
         not st.session_state.indexed
     )
-
 )
 
 
 # =========================================================
-# PROCESS QUESTION
+# PROCESS CHAT QUESTION
 # =========================================================
 
 if prompt:
 
-    # Save user message
-
     st.session_state.messages.append(
-
         {
             "role": "user",
             "content": prompt
         }
-
     )
-
-
-    # Display user message
 
     with st.chat_message(
         "user"
@@ -942,9 +857,6 @@ if prompt:
             prompt
         )
 
-
-    # Assistant response
-
     with st.chat_message(
         "assistant"
     ):
@@ -952,100 +864,109 @@ if prompt:
         try:
 
             with st.spinner(
-                "🤖 Lecturn is searching your notes..."
+                "🤖 Searching your notes..."
             ):
 
                 result = ask_question(
                     prompt
                 )
 
-
             answer = result[
                 "answer"
             ]
-
 
             pages = result.get(
                 "pages",
                 []
             )
 
-
-            # Display answer
-
             st.markdown(
                 answer
             )
 
-
-            # Display source pages
-
             if pages:
 
                 st.caption(
-
                     "📄 Source Pages: "
-
                     + ", ".join(
-
                         map(
                             str,
                             pages
                         )
-
                     )
-
                 )
-
 
         except Exception as error:
 
             answer = (
-
                 "I couldn't generate an answer "
                 "because an error occurred."
-
             )
-
 
             st.error(
-
-                f"{answer}\n\n"
-                f"Details: {error}"
-
+                f"{answer}\n\nDetails: {error}"
             )
 
-
-    # Save assistant response
-
     st.session_state.messages.append(
-
         {
             "role": "assistant",
             "content": answer
         }
-
     )
+
+
+# =========================================================
+# AUTO SCROLL TO GENERATED FEATURE
+# =========================================================
+
+if st.session_state.scroll_target:
+
+    target = (
+        st.session_state.scroll_target
+    )
+
+    components.html(
+        f"""
+<script>
+setTimeout(function() {{
+
+    const targetElement =
+        parent.document.getElementById(
+            "{target}"
+        );
+
+    if (targetElement) {{
+
+        targetElement.scrollIntoView({{
+            behavior: "smooth",
+            block: "start"
+        }});
+
+    }}
+
+}}, 500);
+</script>
+""",
+        height=0
+    )
+
+    # Clear after scrolling
+    st.session_state.scroll_target = None
 
 
 # =========================================================
 # FOOTER
 # =========================================================
 
+footer_html = (
+    '<div class="footer">'
+    'Built with 🧠 RAG, Python, ChromaDB and Groq'
+    '<br>'
+    'Lecturn — Study smarter, not harder.'
+    '</div>'
+)
+
 st.markdown(
-    """
-    <div class="footer">
-
-        Built with 🧠 RAG, Python,
-        ChromaDB and Groq
-
-        <br>
-
-        Lecturn — Study smarter,
-        not harder.
-
-    </div>
-    """,
-
+    footer_html,
     unsafe_allow_html=True
 )
