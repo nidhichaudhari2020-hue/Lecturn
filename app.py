@@ -109,27 +109,22 @@ st.markdown(
 
 feature_columns = st.columns(4)
 
-
 features = [
-
     (
         "💬",
         "Ask Questions",
         "Chat with your uploaded study notes."
     ),
-
     (
         "📝",
         "Take Quizzes",
         "Test yourself using AI-generated MCQs."
     ),
-
     (
         "🃏",
         "Flashcards",
         "Revise important concepts quickly."
     ),
-
     (
         "⭐",
         "Exam Focus",
@@ -137,48 +132,24 @@ features = [
     )
 ]
 
-
 for column, feature in zip(feature_columns, features):
 
     icon, title, description = feature
 
     with column:
-        st.markdown(
-            f"""
-<div class="feature-card">
-    <div class="feature-icon">{icon}</div>
-    <div class="feature-title">{title}</div>
-    <div class="feature-text">{description}</div>
-</div>
-""",
-            unsafe_allow_html=True
+
+        card_html = (
+            '<div class="feature-card">'
+            f'<div class="feature-icon">{icon}</div>'
+            f'<div class="feature-title">{title}</div>'
+            f'<div class="feature-text">{description}</div>'
+            '</div>'
         )
 
-    icon, title, description = feature
-
-    with column:
-
         st.markdown(
-            f"""
-            <div class="feature-card">
-
-                <div class="feature-icon">
-                    {icon}
-                </div>
-
-                <div class="feature-title">
-                    {title}
-                </div>
-
-                <div class="feature-text">
-                    {description}
-                </div>
-
-            </div>
-            """,
+            card_html,
             unsafe_allow_html=True
         )
-
 
 st.write("")
 
