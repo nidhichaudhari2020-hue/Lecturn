@@ -1,139 +1,449 @@
+/* =========================================================
+   PASTEL TEAL + OFF-WHITE THEME
+   ========================================================= */
+
+
+/* MAIN APP */
+
 .stApp {
-    background: linear-gradient(135deg, #071c1c, #0f2f2f);
-    color: #f0fdfa;
+    background: linear-gradient(
+        135deg,
+        #fffdf8,
+        #f3fbf9,
+        #eaf8f5
+    );
+
+    color: #244642;
 }
+
+
+/* MAIN CONTAINER */
+
+.main .block-container {
+    max-width: 1200px;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
 
 section[data-testid="stSidebar"] {
-    background-color: #061f1f;
-    border-right: 1px solid #0f766e;
+    background: linear-gradient(
+        180deg,
+        #dff4ef,
+        #edf9f6
+    );
+
+    border-right: 1px solid #b7ded5;
 }
 
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    color: #285f58 !important;
+}
+
+
+/* =========================================================
+   HEADINGS
+   ========================================================= */
+
 h1 {
-    color: #5eead4 !important;
+    color: #347d73 !important;
+    font-weight: 800 !important;
 }
 
 h2 {
-    color: #ccfbf1 !important;
+    color: #356b64 !important;
+    font-weight: 750 !important;
 }
 
 h3 {
-    color: #99f6e4 !important;
+    color: #47847b !important;
+    font-weight: 700 !important;
 }
+
+
+/* =========================================================
+   HERO SECTION
+   ========================================================= */
 
 .hero-card {
-    background: linear-gradient(135deg, #115e59, #134e4a);
-    border: 1px solid #2dd4bf;
-    border-radius: 20px;
-    padding: 30px;
-    margin-bottom: 25px;
+    background: linear-gradient(
+        135deg,
+        #ccece5,
+        #e5f6f2,
+        #f8fdfb
+    );
+
+    border: 1px solid #b2ddd4;
+
+    border-radius: 24px;
+
+    padding: 32px;
+
+    margin-bottom: 28px;
+
+    box-shadow:
+        0 10px 30px rgba(65, 120, 110, 0.10);
 }
+
 
 .hero-title {
-    color: #ecfdf5;
-    font-size: 36px;
-    font-weight: bold;
+    color: #285f58;
+
+    font-size: 38px;
+
+    font-weight: 800;
 }
+
 
 .hero-text {
-    color: #ccfbf1;
+    color: #527b75;
+
     font-size: 17px;
+
     margin-top: 10px;
+
+    line-height: 1.6;
 }
+
+
+/* =========================================================
+   FEATURE CARDS
+   ========================================================= */
 
 .feature-card {
-    background-color: #123838;
-    border: 1px solid #0f766e;
-    border-radius: 16px;
+    background: #fffefa;
+
+    border: 1px solid #c9e6df;
+
+    border-radius: 18px;
+
     padding: 20px;
-    min-height: 140px;
+
+    min-height: 145px;
+
+    box-shadow:
+        0 8px 22px rgba(57, 110, 101, 0.08);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
 }
 
+
 .feature-card:hover {
-    border-color: #2dd4bf;
+    transform: translateY(-4px);
+
+    border-color: #8fcfc1;
+
+    box-shadow:
+        0 12px 28px rgba(57, 110, 101, 0.14);
 }
+
 
 .feature-icon {
     font-size: 30px;
 }
 
+
 .feature-title {
-    color: #f0fdfa;
+    color: #315f59;
+
     font-size: 18px;
-    font-weight: bold;
+
+    font-weight: 800;
+
     margin-top: 10px;
 }
 
+
 .feature-text {
-    color: #99f6e4;
-    margin-top: 8px;
+    color: #698985;
+
+    margin-top: 7px;
+
+    line-height: 1.5;
 }
+
+
+/* =========================================================
+   DASHBOARD METRICS
+   ========================================================= */
 
 [data-testid="stMetric"] {
-    background-color: #123838;
-    border: 1px solid #0f766e;
-    border-radius: 16px;
+    background: #fffefa;
+
+    border: 1px solid #c9e6df;
+
+    border-radius: 18px;
+
     padding: 18px;
+
+    box-shadow:
+        0 8px 22px rgba(57, 110, 101, 0.08);
 }
 
-[data-testid="stMetricValue"] {
-    color: #5eead4;
+
+[data-testid="stMetricLabel"] {
+    color: #65847f !important;
 }
+
+
+[data-testid="stMetricValue"] {
+    color: #347d73 !important;
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 
 .stButton > button {
     width: 100%;
-    background-color: #0d9488;
-    color: white;
-    border: 1px solid #14b8a6;
+
+    background: #9ed9cd;
+
+    color: #234f49;
+
+    border: 1px solid #87cabe;
+
     border-radius: 12px;
-    font-weight: bold;
+
+    font-weight: 700;
+
+    padding: 10px 16px;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
+
 
 .stButton > button:hover {
-    background-color: #0f766e;
-    color: white;
-    border-color: #5eead4;
+    background: #83cbbd;
+
+    color: #173f39;
+
+    border-color: #6fbcad;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 6px 15px rgba(52, 125, 115, 0.15);
 }
 
+
+/* DISABLED BUTTON */
+
+.stButton > button:disabled {
+    background: #dcece8;
+
+    color: #8aa49f;
+
+    border-color: #cbded9;
+}
+
+
+/* =========================================================
+   FILE UPLOADER
+   ========================================================= */
+
 [data-testid="stFileUploader"] {
-    background-color: #123838;
-    border: 1px dashed #2dd4bf;
-    border-radius: 14px;
+    background: #fffefa;
+
+    border: 1px dashed #8fcfc1;
+
+    border-radius: 16px;
+
     padding: 10px;
 }
 
-[data-testid="stChatMessage"] {
-    background-color: #123838;
-    border: 1px solid #0f766e;
-    border-radius: 16px;
-    padding: 12px;
-    margin-bottom: 10px;
+
+[data-testid="stFileUploaderDropzone"] {
+    background: #f5fbf9;
+
+    border: 1px dashed #a6d8ce;
+
+    border-radius: 14px;
 }
+
+
+/* =========================================================
+   CHAT MESSAGES
+   ========================================================= */
+
+[data-testid="stChatMessage"] {
+    background: #fffefa;
+
+    border: 1px solid #d0e9e3;
+
+    border-radius: 18px;
+
+    padding: 14px;
+
+    margin-bottom: 10px;
+
+    box-shadow:
+        0 5px 15px rgba(57, 110, 101, 0.06);
+}
+
+
+/* =========================================================
+   CHAT INPUT
+   ========================================================= */
+
+[data-testid="stChatInput"] {
+    background: #ffffff;
+
+    border: 1px solid #b8ddd5;
+
+    border-radius: 16px;
+}
+
+
+/* =========================================================
+   TEXT INPUT
+   ========================================================= */
+
+input,
+textarea {
+    color: #294e49 !important;
+}
+
+
+/* =========================================================
+   QUIZ OPTIONS
+   ========================================================= */
 
 div[role="radiogroup"] {
-    background-color: #123838;
-    border: 1px solid #0f766e;
-    border-radius: 14px;
-    padding: 15px;
+    background: #fffefa;
+
+    border: 1px solid #d0e9e3;
+
+    border-radius: 16px;
+
+    padding: 16px;
 }
 
+
+/* =========================================================
+   EXPANDERS
+   ========================================================= */
+
 [data-testid="stExpander"] {
-    background-color: #123838;
-    border: 1px solid #0f766e;
-    border-radius: 14px;
+    background: #fffefa;
+
+    border: 1px solid #cce5df;
+
+    border-radius: 16px;
+
+    overflow: hidden;
 }
+
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
 
 [data-testid="stAlert"] {
     border-radius: 14px;
 }
 
+
+/* =========================================================
+   CAPTIONS
+   ========================================================= */
+
+[data-testid="stCaptionContainer"] {
+    color: #6a8984 !important;
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+a {
+    color: #347d73 !important;
+}
+
+
+a:hover {
+    color: #245f57 !important;
+}
+
+
+/* =========================================================
+   PROGRESS BAR
+   ========================================================= */
+
+.stProgress > div > div > div > div {
+    background: #72c4b5;
+}
+
+
+/* =========================================================
+   DIVIDERS
+   ========================================================= */
+
 hr {
     border: 0;
-    border-top: 1px solid #0f766e;
+
+    border-top: 1px solid #d4e9e4;
+
+    margin-top: 24px;
+
+    margin-bottom: 24px;
 }
+
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+
+::-webkit-scrollbar-track {
+    background: #f3faf8;
+}
+
+
+::-webkit-scrollbar-thumb {
+    background: #a5d8ce;
+
+    border-radius: 10px;
+}
+
+
+::-webkit-scrollbar-thumb:hover {
+    background: #83c7ba;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
 
 .footer {
     text-align: center;
-    color: #5eead4;
+
+    color: #638b84;
+
     margin-top: 40px;
+
     padding: 20px;
+
+    border-top: 1px solid #d4e9e4;
 }
