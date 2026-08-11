@@ -1,232 +1,139 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-
-html, body, [class*="css"] {
-    font-family: "Nunito", sans-serif;
-}
-
-/* Main background */
-
 .stApp {
-    background:
-        radial-gradient(circle at top left, rgba(124, 58, 237, 0.28), transparent 35%),
-        radial-gradient(circle at bottom right, rgba(37, 99, 235, 0.25), transparent 35%),
-        linear-gradient(135deg, #0f172a, #111827);
-    color: #f8fafc;
+    background: linear-gradient(135deg, #071c1c, #0f2f2f);
+    color: #f0fdfa;
 }
-
-/* Main content spacing */
-
-.main .block-container {
-    max-width: 1200px;
-    padding-top: 2rem;
-    padding-bottom: 4rem;
-}
-
-/* Sidebar */
 
 section[data-testid="stSidebar"] {
-    background: rgba(15, 23, 42, 0.96);
-    border-right: 1px solid rgba(148, 163, 184, 0.2);
+    background-color: #061f1f;
+    border-right: 1px solid #0f766e;
 }
-
-section[data-testid="stSidebar"] > div {
-    padding-top: 1.5rem;
-}
-
-/* Titles */
 
 h1 {
-    font-size: 3rem !important;
-    font-weight: 800 !important;
-    background: linear-gradient(90deg, #a78bfa, #60a5fa, #34d399);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #5eead4 !important;
 }
 
-h2, h3 {
-    color: #f8fafc !important;
-    font-weight: 700 !important;
+h2 {
+    color: #ccfbf1 !important;
 }
 
-/* Caption */
-
-[data-testid="stCaptionContainer"] {
-    color: #cbd5e1;
-    font-size: 1rem;
+h3 {
+    color: #99f6e4 !important;
 }
-
-/* Metric cards */
-
-[data-testid="stMetric"] {
-    background: rgba(30, 41, 59, 0.75);
-    border: 1px solid rgba(148, 163, 184, 0.2);
-    padding: 1.2rem;
-    border-radius: 18px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-    transition: transform 0.25s ease, border-color 0.25s ease;
-}
-
-[data-testid="stMetric"]:hover {
-    transform: translateY(-5px);
-    border-color: #8b5cf6;
-}
-
-[data-testid="stMetricValue"] {
-    font-weight: 800;
-    color: #a78bfa;
-}
-
-/* Buttons */
-
-.stButton > button,
-[data-testid="stBaseButton-primary"],
-[data-testid="stBaseButton-secondary"] {
-    width: 100%;
-    border: none;
-    border-radius: 14px;
-    padding: 0.7rem 1rem;
-    font-weight: 700;
-    color: white;
-    background: linear-gradient(90deg, #7c3aed, #2563eb);
-    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
-    transition: all 0.25s ease;
-}
-
-.stButton > button:hover,
-[data-testid="stBaseButton-primary"]:hover,
-[data-testid="stBaseButton-secondary"]:hover {
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 12px 26px rgba(79, 70, 229, 0.4);
-    border: none;
-}
-
-/* File uploader */
-
-[data-testid="stFileUploader"] {
-    background: rgba(30, 41, 59, 0.78);
-    border: 1px dashed #8b5cf6;
-    border-radius: 16px;
-    padding: 0.8rem;
-}
-
-/* Chat messages */
-
-[data-testid="stChatMessage"] {
-    background: rgba(30, 41, 59, 0.72);
-    border: 1px solid rgba(148, 163, 184, 0.15);
-    border-radius: 18px;
-    padding: 1rem;
-    margin-bottom: 0.8rem;
-}
-
-/* Chat input */
-
-[data-testid="stChatInput"] {
-    background: rgba(30, 41, 59, 0.95);
-    border-radius: 18px;
-}
-
-/* Radio options */
-
-div[role="radiogroup"] {
-    background: rgba(30, 41, 59, 0.65);
-    border-radius: 16px;
-    padding: 1rem;
-    border: 1px solid rgba(148, 163, 184, 0.15);
-}
-
-/* Alerts */
-
-[data-testid="stAlert"] {
-    border-radius: 16px;
-}
-
-/* Progress bar */
-
-.stProgress > div > div > div > div {
-    background: linear-gradient(90deg, #8b5cf6, #3b82f6, #10b981);
-}
-
-/* Divider */
-
-hr {
-    border-color: rgba(148, 163, 184, 0.18);
-}
-
-/* Expander */
-
-[data-testid="stExpander"] {
-    background: rgba(30, 41, 59, 0.65);
-    border-radius: 16px;
-    border: 1px solid rgba(148, 163, 184, 0.15);
-}
-
-/* Custom hero card */
 
 .hero-card {
-    padding: 2rem;
-    border-radius: 24px;
-    background:
-        linear-gradient(
-            135deg,
-            rgba(124, 58, 237, 0.28),
-            rgba(37, 99, 235, 0.22)
-        );
-    border: 1px solid rgba(167, 139, 250, 0.35);
-    margin-bottom: 2rem;
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
+    background: linear-gradient(135deg, #115e59, #134e4a);
+    border: 1px solid #2dd4bf;
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 25px;
 }
 
 .hero-title {
-    font-size: 2rem;
-    font-weight: 800;
-    color: white;
-    margin-bottom: 0.4rem;
+    color: #ecfdf5;
+    font-size: 36px;
+    font-weight: bold;
 }
 
 .hero-text {
-    color: #dbeafe;
-    font-size: 1.05rem;
+    color: #ccfbf1;
+    font-size: 17px;
+    margin-top: 10px;
 }
 
-/* Feature cards */
-
 .feature-card {
-    min-height: 145px;
-    padding: 1.25rem;
-    border-radius: 18px;
-    background: rgba(30, 41, 59, 0.72);
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    transition: all 0.25s ease;
+    background-color: #123838;
+    border: 1px solid #0f766e;
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 140px;
 }
 
 .feature-card:hover {
-    transform: translateY(-5px);
-    border-color: #60a5fa;
+    border-color: #2dd4bf;
 }
 
 .feature-icon {
-    font-size: 2rem;
+    font-size: 30px;
 }
 
 .feature-title {
-    font-size: 1.15rem;
-    font-weight: 800;
-    margin-top: 0.5rem;
-    color: white;
+    color: #f0fdfa;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 10px;
 }
 
 .feature-text {
-    color: #cbd5e1;
-    font-size: 0.95rem;
-    margin-top: 0.4rem;
+    color: #99f6e4;
+    margin-top: 8px;
 }
 
-/* Footer */
+[data-testid="stMetric"] {
+    background-color: #123838;
+    border: 1px solid #0f766e;
+    border-radius: 16px;
+    padding: 18px;
+}
+
+[data-testid="stMetricValue"] {
+    color: #5eead4;
+}
+
+.stButton > button {
+    width: 100%;
+    background-color: #0d9488;
+    color: white;
+    border: 1px solid #14b8a6;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.stButton > button:hover {
+    background-color: #0f766e;
+    color: white;
+    border-color: #5eead4;
+}
+
+[data-testid="stFileUploader"] {
+    background-color: #123838;
+    border: 1px dashed #2dd4bf;
+    border-radius: 14px;
+    padding: 10px;
+}
+
+[data-testid="stChatMessage"] {
+    background-color: #123838;
+    border: 1px solid #0f766e;
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+div[role="radiogroup"] {
+    background-color: #123838;
+    border: 1px solid #0f766e;
+    border-radius: 14px;
+    padding: 15px;
+}
+
+[data-testid="stExpander"] {
+    background-color: #123838;
+    border: 1px solid #0f766e;
+    border-radius: 14px;
+}
+
+[data-testid="stAlert"] {
+    border-radius: 14px;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #0f766e;
+}
 
 .footer {
     text-align: center;
-    color: #94a3b8;
-    margin-top: 3rem;
-    padding: 1rem;
+    color: #5eead4;
+    margin-top: 40px;
+    padding: 20px;
 }
