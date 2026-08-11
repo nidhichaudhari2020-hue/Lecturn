@@ -26,7 +26,16 @@ def show_quiz():
             (score / total) * 100
         )
 
-        col1, col2 = st.columns(2)
+        # Give completion bonus only once
+        if not st.session_state.get(
+            "quiz_bonus_given",
+            False
+        ):
+            st.session_state.xp += 25
+            st.session_state.quiz_completed += 1
+            st.session_state.quiz_bonus_given = True
+
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             st.metric(
@@ -39,6 +48,16 @@ def show_quiz():
                 "Percentage",
                 f"{percentage}%"
             )
+
+        with col3:
+            st.metric(
+                "XP Earned",
+                "+25 Bonus"
+            )
+
+        st.info(
+            f"⭐ Total XP: {st.session_state.xp}"
+        )
 
         return
 
@@ -60,7 +79,6 @@ def show_quiz():
         question["question"]
     )
 
-    # No option selected initially
     selected = st.radio(
         "Choose your answer:",
         question["options"],
@@ -99,11 +117,42 @@ def show_quiz():
                     question["options"][correct_index]
                 )
 
+                topic = question.get(
+                    "topic",
+                    "General"
+                )
+
+                # Correct answer
                 if selected == correct_answer:
 
                     st.session_state.score += 1
 
-                st.session_state.selected_option = selected
+                    # +10 XP
+                    st.session_state.xp += 10
+
+                    # Reduce weak-topic count if it exists
+                    if topic in st.session_state.weak_topics:
+
+                        st.session_state.weak_topics[topic] -= 1
+
+                        if (
+                            st.session_state.weak_topics[topic]
+                            <= 0
+                        ):
+                            del st.session_state.weak_topics[topic]
+
+                # Incorrect answer
+                else:
+
+                    if topic not in st.session_state.weak_topics:
+                        st.session_state.weak_topics[topic] = 0
+
+                    st.session_state.weak_topics[topic] += 1
+
+                st.session_state.selected_option = (
+                    selected
+                )
+
                 st.session_state.show_result = True
 
                 st.rerun()
@@ -126,15 +175,32 @@ def show_quiz():
 
         if selected_answer == correct_answer:
 
-            st.success("🎉 Correct!")
+            st.success(
+                "🎉 Correct! +10 XP"
+            )
 
         else:
 
-            st.error("❌ Incorrect")
+            st.error(
+                "❌ Incorrect"
+            )
 
             st.info(
                 f"✅ Correct Answer: {correct_answer}"
             )
+
+            topic = question.get(
+                "topic",
+                "General"
+            )
+
+            st.warning(
+                f"⚠ Added to Weak Topics: {topic}"
+            )
+
+        st.caption(
+            f"⭐ Total XP: {st.session_state.xp}"
+        )
 
         # -------------------------
         # NEXT QUESTION
@@ -147,10 +213,11 @@ def show_quiz():
         ):
 
             st.session_state.current_question += 1
+
             st.session_state.show_result = False
+
             st.session_state.selected_option = None
 
-            # Keep user at quiz section
             st.session_state.scroll_target = (
                 "quiz-section"
             )
