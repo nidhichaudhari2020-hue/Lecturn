@@ -1,28 +1,50 @@
 /* =========================================================
-   PASTEL TEAL + OFF-WHITE THEME
+   LECTURN - PASTEL TEAL + OFF-WHITE THEME
    ========================================================= */
 
 
-/* MAIN APP */
+/* =========================================================
+   MAIN APP
+   ========================================================= */
+
+html,
+body {
+    background-color: #fffdf8 !important;
+}
 
 .stApp {
     background: linear-gradient(
         135deg,
-        #fffdf8,
-        #f3fbf9,
-        #eaf8f5
-    );
+        #fffdf8 0%,
+        #f5fbf9 45%,
+        #eaf8f5 100%
+    ) !important;
 
-    color: #244642;
+    color: #315f59;
 }
 
 
-/* MAIN CONTAINER */
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
 
 .main .block-container {
     max-width: 1200px;
-    padding-top: 2rem;
-    padding-bottom: 4rem;
+    padding-top: 2rem !important;
+    padding-bottom: 7rem !important;
+}
+
+
+/* =========================================================
+   REMOVE DARK TOP STREAMLIT BAR
+   ========================================================= */
+
+header[data-testid="stHeader"] {
+    display: none !important;
+}
+
+[data-testid="stToolbar"] {
+    background: transparent !important;
 }
 
 
@@ -33,17 +55,31 @@
 section[data-testid="stSidebar"] {
     background: linear-gradient(
         180deg,
-        #dff4ef,
-        #edf9f6
-    );
+        #dff4ef 0%,
+        #eaf8f5 50%,
+        #f4fbf9 100%
+    ) !important;
 
-    border-right: 1px solid #b7ded5;
+    border-right: 1px solid #c3e5dd !important;
+}
+
+section[data-testid="stSidebar"] > div {
+    background: transparent !important;
 }
 
 section[data-testid="stSidebar"] h1,
 section[data-testid="stSidebar"] h2,
 section[data-testid="stSidebar"] h3 {
     color: #285f58 !important;
+}
+
+
+/* =========================================================
+   NORMAL TEXT
+   ========================================================= */
+
+p {
+    color: #587c76;
 }
 
 
@@ -62,24 +98,24 @@ h2 {
 }
 
 h3 {
-    color: #47847b !important;
+    color: #3f756d !important;
     font-weight: 700 !important;
 }
 
 
 /* =========================================================
-   HERO SECTION
+   HERO CARD
    ========================================================= */
 
 .hero-card {
     background: linear-gradient(
         135deg,
-        #ccece5,
-        #e5f6f2,
-        #f8fdfb
+        #ccece5 0%,
+        #e4f6f2 55%,
+        #fffdf8 100%
     );
 
-    border: 1px solid #b2ddd4;
+    border: 1px solid #b6ddd5;
 
     border-radius: 24px;
 
@@ -102,13 +138,13 @@ h3 {
 
 
 .hero-text {
-    color: #527b75;
+    color: #557d76;
 
     font-size: 17px;
 
-    margin-top: 10px;
-
     line-height: 1.6;
+
+    margin-top: 10px;
 }
 
 
@@ -117,7 +153,7 @@ h3 {
    ========================================================= */
 
 .feature-card {
-    background: #fffefa;
+    background-color: #fffefa;
 
     border: 1px solid #c9e6df;
 
@@ -125,7 +161,7 @@ h3 {
 
     padding: 20px;
 
-    min-height: 145px;
+    min-height: 155px;
 
     box-shadow:
         0 8px 22px rgba(57, 110, 101, 0.08);
@@ -149,6 +185,8 @@ h3 {
 
 .feature-icon {
     font-size: 30px;
+
+    margin-bottom: 10px;
 }
 
 
@@ -159,7 +197,7 @@ h3 {
 
     font-weight: 800;
 
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 
@@ -173,11 +211,11 @@ h3 {
 
 
 /* =========================================================
-   DASHBOARD METRICS
+   METRIC CARDS
    ========================================================= */
 
 [data-testid="stMetric"] {
-    background: #fffefa;
+    background-color: #fffefa;
 
     border: 1px solid #c9e6df;
 
@@ -198,7 +236,7 @@ h3 {
 [data-testid="stMetricValue"] {
     color: #347d73 !important;
 
-    font-weight: 800;
+    font-weight: 800 !important;
 }
 
 
@@ -209,31 +247,31 @@ h3 {
 .stButton > button {
     width: 100%;
 
-    background: #9ed9cd;
+    background-color: #a7ddd3 !important;
 
-    color: #234f49;
+    color: #285f58 !important;
 
-    border: 1px solid #87cabe;
+    border: 1px solid #91cfc3 !important;
 
-    border-radius: 12px;
+    border-radius: 12px !important;
 
-    font-weight: 700;
+    font-weight: 700 !important;
 
     padding: 10px 16px;
 
     transition:
-        background 0.2s ease,
+        background-color 0.2s ease,
         transform 0.2s ease,
         box-shadow 0.2s ease;
 }
 
 
 .stButton > button:hover {
-    background: #83cbbd;
+    background-color: #8fd2c5 !important;
 
-    color: #173f39;
+    color: #204f48 !important;
 
-    border-color: #6fbcad;
+    border-color: #75bfb1 !important;
 
     transform: translateY(-2px);
 
@@ -242,14 +280,34 @@ h3 {
 }
 
 
-/* DISABLED BUTTON */
+.stButton > button:active {
+    transform: translateY(0);
+}
+
 
 .stButton > button:disabled {
-    background: #dcece8;
+    background-color: #deefeb !important;
 
-    color: #8aa49f;
+    color: #8ca6a1 !important;
 
-    border-color: #cbded9;
+    border-color: #cbded9 !important;
+
+    opacity: 0.8;
+}
+
+
+/* =========================================================
+   DOWNLOAD BUTTON
+   ========================================================= */
+
+.stDownloadButton > button {
+    background-color: #a7ddd3 !important;
+
+    color: #285f58 !important;
+
+    border: 1px solid #91cfc3 !important;
+
+    border-radius: 12px !important;
 }
 
 
@@ -258,9 +316,9 @@ h3 {
    ========================================================= */
 
 [data-testid="stFileUploader"] {
-    background: #fffefa;
+    background-color: #fffefa !important;
 
-    border: 1px dashed #8fcfc1;
+    border: 1px dashed #91cfc3 !important;
 
     border-radius: 16px;
 
@@ -269,11 +327,20 @@ h3 {
 
 
 [data-testid="stFileUploaderDropzone"] {
-    background: #f5fbf9;
+    background-color: #f7fcfa !important;
 
-    border: 1px dashed #a6d8ce;
+    border: 1px dashed #a6d8ce !important;
 
-    border-radius: 14px;
+    border-radius: 14px !important;
+}
+
+
+[data-testid="stFileUploaderDropzone"] button {
+    background-color: #a7ddd3 !important;
+
+    color: #285f58 !important;
+
+    border: 1px solid #91cfc3 !important;
 }
 
 
@@ -282,11 +349,11 @@ h3 {
    ========================================================= */
 
 [data-testid="stChatMessage"] {
-    background: #fffefa;
+    background-color: #fffefa !important;
 
-    border: 1px solid #d0e9e3;
+    border: 1px solid #d0e9e3 !important;
 
-    border-radius: 18px;
+    border-radius: 18px !important;
 
     padding: 14px;
 
@@ -302,11 +369,73 @@ h3 {
    ========================================================= */
 
 [data-testid="stChatInput"] {
-    background: #ffffff;
+    background-color: #ffffff !important;
 
-    border: 1px solid #b8ddd5;
+    border: 1px solid #b8ddd5 !important;
 
-    border-radius: 16px;
+    border-radius: 16px !important;
+
+    box-shadow:
+        0 5px 18px rgba(57, 110, 101, 0.08) !important;
+}
+
+
+[data-testid="stChatInput"] > div {
+    background-color: #ffffff !important;
+}
+
+
+[data-testid="stChatInput"] textarea {
+    background-color: #ffffff !important;
+
+    color: #315f59 !important;
+}
+
+
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #8aa7a2 !important;
+}
+
+
+/* =========================================================
+   REMOVE DARK BOTTOM CHAT AREA
+   ========================================================= */
+
+[data-testid="stBottom"] {
+    background-color: #fffdf8 !important;
+
+    background-image: none !important;
+}
+
+
+[data-testid="stBottomBlockContainer"] {
+    background-color: #fffdf8 !important;
+
+    background-image: none !important;
+}
+
+
+.stBottom {
+    background-color: #fffdf8 !important;
+
+    background-image: none !important;
+}
+
+
+[data-testid="stBottom"]::before {
+    background: transparent !important;
+
+    box-shadow: none !important;
+}
+
+
+/* =========================================================
+   INPUT FIELDS
+   ========================================================= */
+
+input,
+textarea {
+    color: #315f59 !important;
 }
 
 
@@ -314,18 +443,47 @@ h3 {
    TEXT INPUT
    ========================================================= */
 
-input,
-textarea {
-    color: #294e49 !important;
+[data-testid="stTextInput"] input {
+    background-color: #ffffff !important;
+
+    color: #315f59 !important;
+
+    border-color: #b8ddd5 !important;
 }
 
 
 /* =========================================================
-   QUIZ OPTIONS
+   TEXT AREA
+   ========================================================= */
+
+[data-testid="stTextArea"] textarea {
+    background-color: #ffffff !important;
+
+    color: #315f59 !important;
+
+    border-color: #b8ddd5 !important;
+}
+
+
+/* =========================================================
+   SELECT BOX
+   ========================================================= */
+
+[data-testid="stSelectbox"] > div > div {
+    background-color: #ffffff !important;
+
+    color: #315f59 !important;
+
+    border-color: #b8ddd5 !important;
+}
+
+
+/* =========================================================
+   QUIZ / RADIO OPTIONS
    ========================================================= */
 
 div[role="radiogroup"] {
-    background: #fffefa;
+    background-color: #fffefa;
 
     border: 1px solid #d0e9e3;
 
@@ -340,11 +498,11 @@ div[role="radiogroup"] {
    ========================================================= */
 
 [data-testid="stExpander"] {
-    background: #fffefa;
+    background-color: #fffefa !important;
 
-    border: 1px solid #cce5df;
+    border: 1px solid #cce5df !important;
 
-    border-radius: 16px;
+    border-radius: 16px !important;
 
     overflow: hidden;
 }
@@ -355,7 +513,7 @@ div[role="radiogroup"] {
    ========================================================= */
 
 [data-testid="stAlert"] {
-    border-radius: 14px;
+    border-radius: 14px !important;
 }
 
 
@@ -387,7 +545,7 @@ a:hover {
    ========================================================= */
 
 .stProgress > div > div > div > div {
-    background: #72c4b5;
+    background-color: #72c4b5 !important;
 }
 
 
@@ -416,19 +574,19 @@ hr {
 
 
 ::-webkit-scrollbar-track {
-    background: #f3faf8;
+    background-color: #f5fbf9;
 }
 
 
 ::-webkit-scrollbar-thumb {
-    background: #a5d8ce;
+    background-color: #a5d8ce;
 
     border-radius: 10px;
 }
 
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #83c7ba;
+    background-color: #83c7ba;
 }
 
 
