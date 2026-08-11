@@ -16,6 +16,8 @@ from backend.embedder import generate_embeddings
 from backend.vectordb import store_chunks, reset_database
 from backend.quiz_generator import generate_quiz
 from backend.rag import ask_question
+from backend.weak_topic_helper import generate_weak_topic_solution
+from backend.weak_topic_practice import generate_topic_practice
 
 
 # =========================================================
@@ -34,9 +36,7 @@ st.set_page_config(
 # =========================================================
 
 def load_css():
-
     try:
-
         with open(
             "assets/style.css",
             encoding="utf-8"
@@ -55,7 +55,7 @@ load_css()
 
 
 # =========================================================
-# PROGRESS FILE
+# PROGRESS STORAGE
 # =========================================================
 
 PROGRESS_FILE = "data/user_progress.json"
@@ -90,9 +90,9 @@ def load_progress():
 
             saved = json.load(file)
 
-            default_progress.update(saved)
+        default_progress.update(saved)
 
-            return default_progress
+        return default_progress
 
     except Exception:
 
@@ -129,10 +129,6 @@ def save_progress():
     except Exception:
         pass
 
-
-# =========================================================
-# LOAD SAVED PROGRESS
-# =========================================================
 
 saved_progress = load_progress()
 
@@ -177,6 +173,14 @@ defaults = {
     "current_flashcard": 0,
     "show_answer": False,
 
+    # Weak Topic Practice
+    "practice_questions": [],
+    "practice_topic": "",
+    "practice_index": 0,
+    "practice_result": False,
+    "practice_selected": None,
+    "practice_xp_awarded": False,
+
     # Dashboard
     "total_pdfs": 0,
     "total_pages": 0,
@@ -195,7 +199,7 @@ for key, value in defaults.items():
 
 
 # =========================================================
-# UPDATE STUDY STREAK
+# STUDY STREAK
 # =========================================================
 
 today = date.today()
@@ -223,7 +227,6 @@ else:
         )
 
         if previous_date == today:
-
             pass
 
         elif previous_date == today - timedelta(days=1):
@@ -251,7 +254,7 @@ else:
 
 
 # =========================================================
-# HERO SECTION
+# HERO
 # =========================================================
 
 hero_html = (
@@ -277,25 +280,21 @@ st.markdown(
 feature_columns = st.columns(4)
 
 features = [
-
     (
         "💬",
         "Ask Questions",
         "Chat with your uploaded study notes."
     ),
-
     (
         "📝",
         "Take Quizzes",
         "Test yourself using AI-generated MCQs."
     ),
-
     (
         "🃏",
         "Flashcards",
         "Revise important concepts quickly."
     ),
-
     (
         "⭐",
         "Exam Focus",
@@ -331,7 +330,7 @@ st.write("")
 
 
 # =========================================================
-# LEARNING DASHBOARD
+# LEARNING PROGRESS
 # =========================================================
 
 st.subheader(
@@ -381,12 +380,10 @@ st.subheader(
     "🚀 Continue Studying"
 )
 
-continue1, continue2, continue3, continue4 = (
-    st.columns(4)
-)
+c1, c2, c3, c4 = st.columns(4)
 
 
-with continue1:
+with c1:
 
     if st.button(
         "💬 Ask AI",
@@ -400,7 +397,7 @@ with continue1:
         st.rerun()
 
 
-with continue2:
+with c2:
 
     if st.button(
         "📝 Continue Quiz",
@@ -422,7 +419,7 @@ with continue2:
             )
 
 
-with continue3:
+with c3:
 
     if st.button(
         "🃏 Review Flashcards",
@@ -444,7 +441,7 @@ with continue3:
             )
 
 
-with continue4:
+with c4:
 
     if st.button(
         "⚠ Weak Topics",
@@ -469,43 +466,33 @@ st.sidebar.title(
     "📂 Study Workspace"
 )
 
-
 uploaded_files = st.sidebar.file_uploader(
-
     "Upload your PDF notes",
-
     type=["pdf"],
-
     accept_multiple_files=True,
-
     help=(
-        "Upload one or more PDF files. "
+        "Upload one or more PDFs. "
         "They will be indexed automatically."
     )
 )
-
 
 st.sidebar.caption(
     "✨ Notes are indexed automatically after upload."
 )
 
-
 st.sidebar.divider()
 
 
 # =========================================================
-# AUTOMATIC PDF INDEXING
+# AUTO INDEX PDF
 # =========================================================
 
 if uploaded_files:
 
     current_files = [
-
         f"{uploaded_file.name}-{uploaded_file.size}"
-
         for uploaded_file in uploaded_files
     ]
-
 
     if (
         st.session_state.last_uploaded_files
@@ -528,27 +515,17 @@ if uploaded_files:
                     exist_ok=True
                 )
 
-
                 reset_database()
-
 
                 progress = (
                     st.sidebar.progress(0)
                 )
 
-
                 all_chunks = []
-
                 total_pages = 0
-
                 total_files = len(
                     uploaded_files
                 )
-
-
-                # -----------------------------------------
-                # PROCESS PDF FILES
-                # -----------------------------------------
 
                 for index, uploaded_file in enumerate(
                     uploaded_files
@@ -559,7 +536,6 @@ if uploaded_files:
                         uploaded_file.name
                     )
 
-
                     with open(
                         save_path,
                         "wb"
@@ -569,46 +545,28 @@ if uploaded_files:
                             uploaded_file.getbuffer()
                         )
 
-
                     pages = extract_text(
                         save_path
                     )
-
 
                     total_pages += len(
                         pages
                     )
 
-
                     chunks = split_into_chunks(
                         pages
                     )
-
 
                     all_chunks.extend(
                         chunks
                     )
 
-
                     progress.progress(
-
                         int(
-
-                            (
-                                (index + 1)
-                                / total_files
-                            )
-
+                            ((index + 1) / total_files)
                             * 50
-
                         )
-
                     )
-
-
-                # -----------------------------------------
-                # EMBEDDINGS
-                # -----------------------------------------
 
                 if not all_chunks:
 
@@ -620,95 +578,68 @@ if uploaded_files:
 
                     progress.progress(60)
 
-
                     texts = [
-
                         chunk["text"]
-
                         for chunk in all_chunks
-
                     ]
 
-
-                    embeddings = (
-                        generate_embeddings(
-                            texts
-                        )
+                    embeddings = generate_embeddings(
+                        texts
                     )
 
-
                     progress.progress(85)
-
 
                     store_chunks(
                         all_chunks,
                         embeddings
                     )
 
-
                     progress.progress(100)
 
-
-                    # -------------------------------------
-                    # SAVE INDEX STATE
-                    # -------------------------------------
-
                     st.session_state.indexed = True
-
 
                     st.session_state.total_pdfs = len(
                         uploaded_files
                     )
 
-
                     st.session_state.total_pages = (
                         total_pages
                     )
 
-
-                    st.session_state.total_chunks = (
-                        len(all_chunks)
+                    st.session_state.total_chunks = len(
+                        all_chunks
                     )
-
 
                     st.session_state.last_uploaded_files = (
                         current_files
                     )
 
-
                     # Reset generated content
-
                     st.session_state.quiz = []
-
                     st.session_state.current_question = 0
-
                     st.session_state.score = 0
-
                     st.session_state.show_result = False
-
                     st.session_state.selected_option = None
-
                     st.session_state.quiz_bonus_given = False
 
-
                     st.session_state.flashcards = []
-
                     st.session_state.current_flashcard = 0
-
                     st.session_state.show_answer = False
 
+                    st.session_state.practice_questions = []
+                    st.session_state.practice_topic = ""
+                    st.session_state.practice_index = 0
+                    st.session_state.practice_result = False
+                    st.session_state.practice_selected = None
+                    st.session_state.practice_xp_awarded = False
 
                     st.session_state.summary = ""
-
                     st.session_state.important_topics = ""
-
                     st.session_state.messages = []
-
 
                     st.sidebar.success(
                         "✅ Notes indexed automatically!"
                     )
-
 
         except Exception as error:
 
@@ -717,7 +648,6 @@ if uploaded_files:
             st.sidebar.error(
                 f"Automatic indexing failed: {error}"
             )
-
 
 else:
 
@@ -736,7 +666,7 @@ st.sidebar.subheader(
 
 
 # =========================================================
-# GENERATE QUIZ
+# QUIZ
 # =========================================================
 
 if st.sidebar.button(
@@ -760,43 +690,31 @@ if st.sidebar.button(
 
                 quiz = generate_quiz()
 
-
             if quiz:
 
                 st.session_state.quiz = quiz
-
                 st.session_state.current_question = 0
-
                 st.session_state.score = 0
-
                 st.session_state.show_result = False
-
                 st.session_state.selected_option = None
-
                 st.session_state.quiz_bonus_given = False
-
                 st.session_state.quiz_version += 1
-
 
                 st.session_state.scroll_target = (
                     "quiz-section"
                 )
 
-
                 st.sidebar.success(
                     "Quiz generated!"
                 )
 
-
                 st.rerun()
-
 
             else:
 
                 st.sidebar.error(
                     "Quiz generation failed."
                 )
-
 
         except Exception as error:
 
@@ -806,7 +724,7 @@ if st.sidebar.button(
 
 
 # =========================================================
-# GENERATE FLASHCARDS
+# FLASHCARDS
 # =========================================================
 
 if st.sidebar.button(
@@ -832,38 +750,30 @@ if st.sidebar.button(
                     generate_flashcards()
                 )
 
-
             if flashcards:
 
                 st.session_state.flashcards = (
                     flashcards
                 )
 
-
                 st.session_state.current_flashcard = 0
-
                 st.session_state.show_answer = False
-
 
                 st.session_state.scroll_target = (
                     "flashcards-section"
                 )
 
-
                 st.sidebar.success(
                     "Flashcards generated!"
                 )
 
-
                 st.rerun()
-
 
             else:
 
                 st.sidebar.error(
                     "Flashcard generation failed."
                 )
-
 
         except Exception as error:
 
@@ -873,7 +783,7 @@ if st.sidebar.button(
 
 
 # =========================================================
-# GENERATE SUMMARY
+# SUMMARY
 # =========================================================
 
 if st.sidebar.button(
@@ -899,24 +809,19 @@ if st.sidebar.button(
                     generate_summary()
                 )
 
-
             st.session_state.xp += 5
 
             save_progress()
-
 
             st.session_state.scroll_target = (
                 "summary-section"
             )
 
-
             st.sidebar.success(
                 "Summary generated! +5 XP"
             )
 
-
             st.rerun()
-
 
         except Exception as error:
 
@@ -952,24 +857,19 @@ if st.sidebar.button(
                     generate_important_topics()
                 )
 
-
             st.session_state.xp += 5
 
             save_progress()
-
 
             st.session_state.scroll_target = (
                 "topics-section"
             )
 
-
             st.sidebar.success(
                 "Topics generated! +5 XP"
             )
 
-
             st.rerun()
-
 
         except Exception as error:
 
@@ -980,14 +880,14 @@ if st.sidebar.button(
 
 
 # =========================================================
-# ORIGINAL DOCUMENT DASHBOARD
+# DOCUMENT DASHBOARD
 # =========================================================
 
 show_dashboard()
 
 
 # =========================================================
-# QUIZ
+# QUIZ SECTION
 # =========================================================
 
 st.markdown(
@@ -995,12 +895,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 show_quiz()
 
 
 # =========================================================
-# FLASHCARDS
+# FLASHCARDS DISPLAY
 # =========================================================
 
 st.markdown(
@@ -1008,75 +907,47 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 if st.session_state.flashcards:
 
     st.header(
         "🃏 Flashcards"
     )
 
-
     card_index = (
         st.session_state.current_flashcard
     )
-
 
     cards = (
         st.session_state.flashcards
     )
 
-
     card = cards[
         card_index
     ]
 
-
     st.progress(
-
         (card_index + 1)
-
         / len(cards)
-
     )
-
 
     st.caption(
-
         f"Card {card_index + 1} "
         f"of {len(cards)}"
-
     )
-
 
     flashcard_html = (
-
         '<div class="feature-card">'
-
-        '<div class="feature-icon">'
-        '🧠'
+        '<div class="feature-icon">🧠</div>'
+        f'<div class="feature-title">{card["question"]}</div>'
         '</div>'
-
-        f'<div class="feature-title">'
-        f'{card["question"]}'
-        '</div>'
-
-        '</div>'
-
     )
-
 
     st.markdown(
         flashcard_html,
         unsafe_allow_html=True
     )
 
-
     st.write("")
-
-
-    # -----------------------------------------
-    # REVEAL ANSWER
-    # -----------------------------------------
 
     if st.button(
         "👁 Reveal Answer",
@@ -1087,14 +958,11 @@ if st.session_state.flashcards:
         if not st.session_state.show_answer:
 
             st.session_state.flashcards_reviewed += 1
-
             st.session_state.xp += 2
 
             save_progress()
 
-
         st.session_state.show_answer = True
-
 
     if st.session_state.show_answer:
 
@@ -1106,15 +974,9 @@ if st.session_state.flashcards:
             "⭐ +2 XP for reviewing this card"
         )
 
-
     previous_column, next_column = (
         st.columns(2)
     )
-
-
-    # -----------------------------------------
-    # PREVIOUS CARD
-    # -----------------------------------------
 
     with previous_column:
 
@@ -1128,7 +990,6 @@ if st.session_state.flashcards:
         ):
 
             st.session_state.current_flashcard -= 1
-
             st.session_state.show_answer = False
 
             st.session_state.scroll_target = (
@@ -1136,11 +997,6 @@ if st.session_state.flashcards:
             )
 
             st.rerun()
-
-
-    # -----------------------------------------
-    # NEXT CARD
-    # -----------------------------------------
 
     with next_column:
 
@@ -1155,7 +1011,6 @@ if st.session_state.flashcards:
         ):
 
             st.session_state.current_flashcard += 1
-
             st.session_state.show_answer = False
 
             st.session_state.scroll_target = (
@@ -1163,7 +1018,6 @@ if st.session_state.flashcards:
             )
 
             st.rerun()
-
 
     st.divider()
 
@@ -1177,39 +1031,248 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 st.subheader(
     "⚠ Topics To Revise"
 )
 
-
 if st.session_state.weak_topics:
 
     sorted_topics = sorted(
-
         st.session_state.weak_topics.items(),
-
         key=lambda item: item[1],
-
         reverse=True
-
     )
-
 
     for topic, mistakes in sorted_topics:
 
-        st.warning(
-            f"📌 {topic} — "
-            f"{mistakes} mistake(s)"
-        )
+        with st.expander(
+            f"📌 {topic} — {mistakes} mistake(s)"
+        ):
 
+            st.write(
+                "Choose how you want to improve this topic."
+            )
+
+            # -----------------------------------------
+            # TEACH ME
+            # -----------------------------------------
+
+            if st.button(
+                f"🧠 Teach Me {topic}",
+                key=f"teach_{topic}",
+                use_container_width=True
+            ):
+
+                with st.spinner(
+                    "Creating your learning solution..."
+                ):
+
+                    solution = (
+                        generate_weak_topic_solution(
+                            topic,
+                            mistakes
+                        )
+                    )
+
+                st.markdown(
+                    solution
+                )
+
+            # -----------------------------------------
+            # PRACTICE
+            # -----------------------------------------
+
+            if st.button(
+                f"🎯 Practice {topic}",
+                key=f"practice_{topic}",
+                use_container_width=True
+            ):
+
+                with st.spinner(
+                    "Creating practice questions..."
+                ):
+
+                    questions = generate_topic_practice(
+                        topic
+                    )
+
+                if questions:
+
+                    st.session_state.practice_questions = (
+                        questions
+                    )
+
+                    st.session_state.practice_topic = topic
+                    st.session_state.practice_index = 0
+                    st.session_state.practice_result = False
+                    st.session_state.practice_selected = None
+                    st.session_state.practice_xp_awarded = False
+
+                    st.session_state.scroll_target = (
+                        "practice-section"
+                    )
+
+                    st.rerun()
 
 else:
 
     st.success(
-        "🎉 No weak topics yet. "
-        "Keep practicing!"
+        "🎉 No weak topics yet. Keep practicing!"
     )
+
+
+# =========================================================
+# WEAK TOPIC PRACTICE
+# =========================================================
+
+st.markdown(
+    '<div id="practice-section"></div>',
+    unsafe_allow_html=True
+)
+
+if st.session_state.practice_questions:
+
+    st.header(
+        f"🎯 Practice: "
+        f"{st.session_state.practice_topic}"
+    )
+
+    questions = (
+        st.session_state.practice_questions
+    )
+
+    index = (
+        st.session_state.practice_index
+    )
+
+    if index < len(questions):
+
+        question = questions[
+            index
+        ]
+
+        st.progress(
+            (index + 1)
+            / len(questions)
+        )
+
+        st.subheader(
+            f"Practice Question "
+            f"{index + 1} of {len(questions)}"
+        )
+
+        st.write(
+            question["question"]
+        )
+
+        selected = st.radio(
+            "Choose your answer:",
+            question["options"],
+            index=None,
+            key=(
+                f"practice_"
+                f"{st.session_state.practice_topic}_"
+                f"{index}"
+            ),
+            disabled=(
+                st.session_state.practice_result
+            )
+        )
+
+        if not st.session_state.practice_result:
+
+            if st.button(
+                "✅ Check Answer",
+                key=f"check_practice_{index}",
+                use_container_width=True
+            ):
+
+                if selected is None:
+
+                    st.warning(
+                        "Choose an answer first."
+                    )
+
+                else:
+
+                    st.session_state.practice_selected = (
+                        selected
+                    )
+
+                    st.session_state.practice_result = True
+
+                    st.session_state.scroll_target = (
+                        "practice-section"
+                    )
+
+                    st.rerun()
+
+        if st.session_state.practice_result:
+
+            correct_answer = (
+                question["options"][
+                    question["answer"]
+                ]
+            )
+
+            if (
+                st.session_state.practice_selected
+                == correct_answer
+            ):
+
+                if not st.session_state.practice_xp_awarded:
+
+                    st.session_state.xp += 10
+
+                    st.session_state.practice_xp_awarded = True
+
+                    save_progress()
+
+                st.success(
+                    "🎉 Correct! +10 XP"
+                )
+
+            else:
+
+                st.error(
+                    "❌ Incorrect"
+                )
+
+                st.info(
+                    f"✅ Correct Answer: "
+                    f"{correct_answer}"
+                )
+
+            if st.button(
+                "Next Practice Question ➡",
+                key=f"next_practice_{index}",
+                use_container_width=True
+            ):
+
+                st.session_state.practice_index += 1
+
+                st.session_state.practice_result = False
+
+                st.session_state.practice_selected = None
+
+                st.session_state.practice_xp_awarded = False
+
+                st.session_state.scroll_target = (
+                    "practice-section"
+                )
+
+                st.rerun()
+
+    else:
+
+        st.success(
+            "🎉 Practice completed!"
+        )
+
+        st.write(
+            "Great work. Keep revising this topic "
+            "until it feels easy."
+        )
 
 
 # =========================================================
@@ -1221,13 +1284,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 if st.session_state.summary:
 
     st.header(
         "📚 Study Summary"
     )
-
 
     with st.expander(
         "Open Study Summary",
@@ -1237,7 +1298,6 @@ if st.session_state.summary:
         st.markdown(
             st.session_state.summary
         )
-
 
     st.divider()
 
@@ -1251,13 +1311,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 if st.session_state.important_topics:
 
     st.header(
         "⭐ Important Topics"
     )
-
 
     with st.expander(
         "Open Important Topics",
@@ -1267,7 +1325,6 @@ if st.session_state.important_topics:
         st.markdown(
             st.session_state.important_topics
         )
-
 
     st.divider()
 
@@ -1281,11 +1338,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 st.header(
     "💬 AI Study Assistant"
 )
-
 
 if not st.session_state.indexed:
 
@@ -1294,7 +1349,6 @@ if not st.session_state.indexed:
         "They will be indexed automatically."
     )
 
-
 else:
 
     st.success(
@@ -1302,10 +1356,6 @@ else:
         "Ask anything from the uploaded material."
     )
 
-
-# =========================================================
-# CHAT HISTORY
-# =========================================================
 
 for message in st.session_state.messages:
 
@@ -1318,24 +1368,13 @@ for message in st.session_state.messages:
         )
 
 
-# =========================================================
-# CHAT INPUT
-# =========================================================
-
 prompt = st.chat_input(
-
     "Ask anything from your notes...",
-
     disabled=(
         not st.session_state.indexed
     )
-
 )
 
-
-# =========================================================
-# PROCESS CHAT
-# =========================================================
 
 if prompt:
 
@@ -1346,7 +1385,6 @@ if prompt:
         }
     )
 
-
     with st.chat_message(
         "user"
     ):
@@ -1354,7 +1392,6 @@ if prompt:
         st.markdown(
             prompt
         )
-
 
     with st.chat_message(
         "assistant"
@@ -1370,22 +1407,18 @@ if prompt:
                     prompt
                 )
 
-
             answer = result[
                 "answer"
             ]
-
 
             pages = result.get(
                 "pages",
                 []
             )
 
-
             st.markdown(
                 answer
             )
-
 
             if pages:
 
@@ -1399,7 +1432,6 @@ if prompt:
                     )
                 )
 
-
         except Exception as error:
 
             answer = (
@@ -1407,12 +1439,10 @@ if prompt:
                 "because an error occurred."
             )
 
-
             st.error(
                 f"{answer}\n\n"
                 f"Details: {error}"
             )
-
 
     st.session_state.messages.append(
         {
@@ -1432,7 +1462,6 @@ if st.session_state.scroll_target:
         st.session_state.scroll_target
     )
 
-
     components.html(
         f"""
 <script>
@@ -1447,11 +1476,8 @@ setTimeout(function() {{
     if (element) {{
 
         element.scrollIntoView({{
-
             behavior: "smooth",
-
             block: "start"
-
         }});
 
     }}
@@ -1463,7 +1489,6 @@ setTimeout(function() {{
         height=0
     )
 
-
     st.session_state.scroll_target = None
 
 
@@ -1472,20 +1497,13 @@ setTimeout(function() {{
 # =========================================================
 
 footer_html = (
-
     '<div class="footer">'
-
     'Built with 🧠 RAG, Python, '
     'ChromaDB and Groq'
-
     '<br>'
-
     'Lecturn — Study smarter, not harder.'
-
     '</div>'
-
 )
-
 
 st.markdown(
     footer_html,
