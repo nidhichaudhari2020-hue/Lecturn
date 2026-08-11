@@ -92,22 +92,16 @@ for key, value in defaults.items():
 
 st.markdown(
     """
-    <div class="hero-card">
-
-        <div class="hero-title">
-            📚 Lecturn
-        </div>
-
-        <div class="hero-text">
-            Turn your study notes into answers, quizzes,
-            flashcards, summaries and smarter revision sessions.
-        </div>
-
+<div class="hero-card">
+    <div class="hero-title">📚 Lecturn</div>
+    <div class="hero-text">
+        Turn your study notes into answers, quizzes, flashcards,
+        summaries and smarter revision sessions.
     </div>
-    """,
+</div>
+""",
     unsafe_allow_html=True
 )
-
 
 # =========================================================
 # FEATURE CARDS
@@ -144,10 +138,21 @@ features = [
 ]
 
 
-for column, feature in zip(
-    feature_columns,
-    features
-):
+for column, feature in zip(feature_columns, features):
+
+    icon, title, description = feature
+
+    with column:
+        st.markdown(
+            f"""
+<div class="feature-card">
+    <div class="feature-icon">{icon}</div>
+    <div class="feature-title">{title}</div>
+    <div class="feature-text">{description}</div>
+</div>
+""",
+            unsafe_allow_html=True
+        )
 
     icon, title, description = feature
 
