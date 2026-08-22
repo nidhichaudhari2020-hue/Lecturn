@@ -1,5 +1,7 @@
 import os
 import json
+import tempfile
+from html import escape
 from datetime import date, timedelta
 
 import streamlit as st
@@ -18,6 +20,7 @@ from backend.quiz_generator import generate_quiz
 from backend.rag import ask_question
 from backend.weak_topic_helper import generate_weak_topic_solution
 from backend.weak_topic_practice import generate_topic_practice
+from config import GROQ_API_KEY
 
 
 # =========================================================
@@ -62,12 +65,6 @@ PROGRESS_FILE = "data/user_progress.json"
 
 
 def load_progress():
-
-    os.makedirs(
-        "data",
-        exist_ok=True
-    )
-
     default_progress = {
         "xp": 0,
         "study_streak": 1,
@@ -77,57 +74,15 @@ def load_progress():
         "weak_topics": {}
     }
 
-    if not os.path.exists(PROGRESS_FILE):
-        return default_progress
-
-    try:
-
-        with open(
-            PROGRESS_FILE,
-            "r",
-            encoding="utf-8"
-        ) as file:
-
-            saved = json.load(file)
-
-        default_progress.update(saved)
-
-        return default_progress
-
-    except Exception:
-
-        return default_progress
+    # Progress is intentionally session-only. A shared server-side JSON file
+    # would mix the data of unrelated visitors on a public Streamlit app.
+    return default_progress
 
 
 def save_progress():
-
-    data = {
-        "xp": st.session_state.xp,
-        "study_streak": st.session_state.study_streak,
-        "last_study_date": st.session_state.last_study_date,
-        "quiz_completed": st.session_state.quiz_completed,
-        "flashcards_reviewed": (
-            st.session_state.flashcards_reviewed
-        ),
-        "weak_topics": st.session_state.weak_topics
-    }
-
-    try:
-
-        with open(
-            PROGRESS_FILE,
-            "w",
-            encoding="utf-8"
-        ) as file:
-
-            json.dump(
-                data,
-                file,
-                indent=4
-            )
-
-    except Exception:
-        pass
+    # Kept as a compatibility hook for quiz modules. State already lives in
+    # st.session_state and is private to the current browser session.
+    return None
 
 
 saved_progress = load_progress()
@@ -143,6 +98,7 @@ defaults = {
     "indexed": False,
     "messages": [],
     "last_uploaded_files": [],
+    "source_files": [],
 
     # Navigation
     "scroll_target": None,
@@ -261,8 +217,8 @@ hero_html = (
     '<div class="hero-card">'
     '<div class="hero-title">📚 Lecturn</div>'
     '<div class="hero-text">'
-    'Turn your study notes into answers, quizzes, '
-    'flashcards, summaries and smarter revision sessions.'
+    'Upload your PDF notes, then learn with cited answers, quizzes, '
+    'flashcards and focused revision—all in one private session.'
     '</div>'
     '</div>'
 )
@@ -477,8 +433,72 @@ uploaded_files = st.sidebar.file_uploader(
 )
 
 st.sidebar.caption(
-    "✨ Notes are indexed automatically after upload."
+    "PDF only · up to 20 MB each · text is removed after indexing"
 )
+
+if not GROQ_API_KEY:
+    st.sidebar.error(
+        "AI features are not configured. Add GROQ_API_KEY to "
+        "Streamlit Secrets or a local .env file."
+    )
+
+with st.sidebar.expander("How your data is handled"):
+    st.write(
+        "Your PDFs are processed for this browser session. Temporary files "
+        "are deleted after text extraction and each session uses a separate "
+        "search collection. Starting a new session clears your workspace."
+    )
+
+if st.sidebar.button(
+    "Try a demo lesson", use_container_width=True,
+    disabled=st.session_state.indexed
+):
+    demo_pages = [{
+        "page": 1,
+        "source": "Demo lesson: The scientific method",
+        "text": (
+            "The scientific method is an iterative process for building "
+            "reliable knowledge. It commonly includes observation, a testable "
+            "question, a falsifiable hypothesis, an experiment with controlled "
+            "variables, analysis of results, and a conclusion. The independent "
+            "variable is deliberately changed; the dependent variable is "
+            "measured. Repetition and peer review improve reliability. A result "
+            "that does not support a hypothesis is still useful evidence."
+        )
+    }]
+    with st.spinner("Preparing the demo lesson..."):
+        reset_database()
+        demo_chunks = split_into_chunks(demo_pages)
+        store_chunks(
+            demo_chunks,
+            generate_embeddings([chunk["text"] for chunk in demo_chunks])
+        )
+    st.session_state.indexed = True
+    st.session_state.total_pdfs = 0
+    st.session_state.total_pages = 1
+    st.session_state.total_chunks = len(demo_chunks)
+    st.session_state.source_files = ["Demo lesson: The scientific method"]
+    st.sidebar.success("Demo ready—try asking a question.")
+    st.rerun()
+
+if st.sidebar.button(
+    "Clear this workspace", use_container_width=True,
+    disabled=not st.session_state.indexed
+):
+    reset_database()
+    for key in (
+        "messages", "last_uploaded_files", "source_files", "quiz",
+        "flashcards", "practice_questions"
+    ):
+        st.session_state[key] = []
+    for key in ("summary", "important_topics"):
+        st.session_state[key] = ""
+    st.session_state.indexed = False
+    st.session_state.total_pdfs = 0
+    st.session_state.total_pages = 0
+    st.session_state.total_chunks = 0
+    st.sidebar.success("Workspace cleared.")
+    st.rerun()
 
 st.sidebar.divider()
 
@@ -488,6 +508,13 @@ st.sidebar.divider()
 # =========================================================
 
 if uploaded_files:
+
+    oversized = [file.name for file in uploaded_files if file.size > 20 * 1024 * 1024]
+    if oversized:
+        st.sidebar.error(
+            "These files exceed the 20 MB limit: " + ", ".join(oversized)
+        )
+        uploaded_files = []
 
     current_files = [
         f"{uploaded_file.name}-{uploaded_file.size}"
@@ -504,11 +531,6 @@ if uploaded_files:
             with st.spinner(
                 "🧠 Reading and preparing your notes..."
             ):
-
-                os.makedirs(
-                    "uploads",
-                    exist_ok=True
-                )
 
                 os.makedirs(
                     "data",
@@ -531,23 +553,22 @@ if uploaded_files:
                     uploaded_files
                 ):
 
-                    save_path = os.path.join(
-                        "uploads",
-                        uploaded_file.name
-                    )
+                    with tempfile.NamedTemporaryFile(
+                        suffix=".pdf", delete=False
+                    ) as temporary_file:
+                        temporary_file.write(uploaded_file.getbuffer())
+                        save_path = temporary_file.name
 
-                    with open(
-                        save_path,
-                        "wb"
-                    ) as file:
+                    try:
+                        pages = extract_text(save_path)
+                    finally:
+                        try:
+                            os.remove(save_path)
+                        except OSError:
+                            pass
 
-                        file.write(
-                            uploaded_file.getbuffer()
-                        )
-
-                    pages = extract_text(
-                        save_path
-                    )
+                    for page in pages:
+                        page["source"] = uploaded_file.name
 
                     total_pages += len(
                         pages
@@ -613,6 +634,9 @@ if uploaded_files:
                     st.session_state.last_uploaded_files = (
                         current_files
                     )
+                    st.session_state.source_files = [
+                        file.name for file in uploaded_files
+                    ]
 
                     # Reset generated content
                     st.session_state.quiz = []
@@ -671,7 +695,8 @@ st.sidebar.subheader(
 
 if st.sidebar.button(
     "📝 Generate Quiz",
-    use_container_width=True
+    use_container_width=True,
+    disabled=not bool(GROQ_API_KEY)
 ):
 
     if not st.session_state.indexed:
@@ -729,7 +754,8 @@ if st.sidebar.button(
 
 if st.sidebar.button(
     "🃏 Generate Flashcards",
-    use_container_width=True
+    use_container_width=True,
+    disabled=not bool(GROQ_API_KEY)
 ):
 
     if not st.session_state.indexed:
@@ -788,7 +814,8 @@ if st.sidebar.button(
 
 if st.sidebar.button(
     "📚 Generate Summary",
-    use_container_width=True
+    use_container_width=True,
+    disabled=not bool(GROQ_API_KEY)
 ):
 
     if not st.session_state.indexed:
@@ -836,7 +863,8 @@ if st.sidebar.button(
 
 if st.sidebar.button(
     "⭐ Important Topics",
-    use_container_width=True
+    use_container_width=True,
+    disabled=not bool(GROQ_API_KEY)
 ):
 
     if not st.session_state.indexed:
@@ -882,6 +910,23 @@ if st.sidebar.button(
 # =========================================================
 # DOCUMENT DASHBOARD
 # =========================================================
+
+if not st.session_state.indexed:
+    st.markdown(
+        """
+        <div class="empty-state">
+          <div class="empty-icon">1 → 2 → 3</div>
+          <h2>Start your first study session</h2>
+          <p><strong>Upload</strong> PDF notes in the sidebar, wait for indexing,
+          then <strong>ask</strong> a question or generate a study activity.</p>
+          <p class="small-note">No PDF handy? Choose <strong>Try a demo lesson</strong>.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+else:
+    source_label = ", ".join(st.session_state.source_files)
+    st.success(f"Workspace ready: {source_label}")
 
 show_dashboard()
 
@@ -938,7 +983,7 @@ if st.session_state.flashcards:
     flashcard_html = (
         '<div class="feature-card">'
         '<div class="feature-icon">🧠</div>'
-        f'<div class="feature-title">{card["question"]}</div>'
+        f'<div class="feature-title">{escape(str(card["question"]))}</div>'
         '</div>'
     )
 
@@ -1330,6 +1375,37 @@ if st.session_state.important_topics:
 
 
 # =========================================================
+# EXPORTS
+# =========================================================
+
+if st.session_state.indexed:
+    export_parts = ["# Lecturn study session", ""]
+    if st.session_state.summary:
+        export_parts.extend(["## Summary", st.session_state.summary, ""])
+    if st.session_state.important_topics:
+        export_parts.extend([
+            "## Important topics", st.session_state.important_topics, ""
+        ])
+    if st.session_state.messages:
+        export_parts.append("## Q&A transcript")
+        for item in st.session_state.messages:
+            label = "Question" if item["role"] == "user" else "Answer"
+            export_parts.extend([f"### {label}", item["content"], ""])
+
+    with st.expander("Export this study session"):
+        st.caption(
+            "Download your generated summary, topics, and Q&A as Markdown."
+        )
+        st.download_button(
+            "Download study notes (.md)",
+            data="\n".join(export_parts),
+            file_name="lecturn-study-session.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
+
+
+# =========================================================
 # AI CHAT
 # =========================================================
 
@@ -1341,6 +1417,12 @@ st.markdown(
 st.header(
     "💬 AI Study Assistant"
 )
+
+if st.session_state.messages and st.button(
+    "Clear conversation", key="clear_chat"
+):
+    st.session_state.messages = []
+    st.rerun()
 
 if not st.session_state.indexed:
 
@@ -1371,7 +1453,7 @@ for message in st.session_state.messages:
 prompt = st.chat_input(
     "Ask anything from your notes...",
     disabled=(
-        not st.session_state.indexed
+        not st.session_state.indexed or not GROQ_API_KEY
     )
 )
 
@@ -1411,26 +1493,18 @@ if prompt:
                 "answer"
             ]
 
-            pages = result.get(
-                "pages",
-                []
-            )
+            citations = result.get("citations", [])
 
             st.markdown(
                 answer
             )
 
-            if pages:
-
-                st.caption(
-                    "📄 Source Pages: "
-                    + ", ".join(
-                        map(
-                            str,
-                            pages
-                        )
-                    )
+            if citations:
+                citation_text = " · ".join(
+                    f"{item['source']} — p. {item['page']}"
+                    for item in citations
                 )
+                st.caption("Sources: " + citation_text)
 
         except Exception as error:
 

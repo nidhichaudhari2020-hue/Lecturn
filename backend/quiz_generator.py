@@ -1,13 +1,11 @@
 import json
-import chromadb
 from groq import Groq
 
 from config import (
     GROQ_API_KEY,
-    CHROMA_DB_PATH,
-    COLLECTION_NAME,
     LLM_MODEL,
 )
+from backend.vectordb import get_documents
 
 
 def generate_quiz():
@@ -15,15 +13,7 @@ def generate_quiz():
     # Create Groq client only when quiz generation is requested
     client = Groq(api_key=GROQ_API_KEY)
 
-    chroma_client = chromadb.PersistentClient(
-        path=CHROMA_DB_PATH
-    )
-
-    collection = chroma_client.get_collection(
-        COLLECTION_NAME
-    )
-
-    docs = collection.get()["documents"]
+    docs = get_documents()
 
     context = "\n\n".join(docs[:30])
 

@@ -1,12 +1,10 @@
-import chromadb
 from groq import Groq
 
 from config import (
     GROQ_API_KEY,
-    CHROMA_DB_PATH,
-    COLLECTION_NAME,
     LLM_MODEL,
 )
+from backend.vectordb import get_documents
 
 
 def generate_summary():
@@ -15,16 +13,7 @@ def generate_summary():
     client = Groq(api_key=GROQ_API_KEY)
 
     # Connect to ChromaDB
-    chroma_client = chromadb.PersistentClient(
-        path=CHROMA_DB_PATH
-    )
-
-    collection = chroma_client.get_collection(
-        COLLECTION_NAME
-    )
-
-    # Get indexed notes
-    docs = collection.get()["documents"]
+    docs = get_documents()
 
     # Use a limited amount of context
     context = "\n\n".join(docs[:30])

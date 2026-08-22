@@ -18,7 +18,8 @@ def split_into_chunks(pages, chunk_size=500, chunk_overlap=100):
         for chunk in page_chunks:
             chunks.append({
                 "page": page["page"],
-                "text": chunk
+                "text": chunk,
+                "source": page.get("source", "Study notes")
             })
 
     return chunks

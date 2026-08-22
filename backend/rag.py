@@ -15,18 +15,19 @@ def ask_question(question):
     metadatas = results["metadatas"][0]
 
     context = ""
-    pages = []
+    citations = []
 
     for document, metadata in zip(
         documents,
         metadatas
     ):
+        source = metadata.get("source", "Study notes")
+        page = metadata["page"]
         context += (
-            f"\nPage {metadata['page']}:\n"
+            f"\n{source}, page {page}:\n"
             f"{document}\n"
         )
-
-        pages.append(metadata["page"])
+        citations.append({"source": source, "page": page})
 
     prompt = f"""
 You are Lecturn, an AI Study Assistant.
@@ -73,7 +74,9 @@ Answer:
 
     return {
         "answer": answer,
-        "pages": sorted(
-            list(set(pages))
-        )
+        "citations": list({
+            (item["source"], item["page"]): item
+            for item in citations
+        }.values()),
+        "pages": sorted({item["page"] for item in citations})
     }
